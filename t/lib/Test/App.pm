@@ -2,19 +2,20 @@ package Test::App;
 use Moose;
 use namespace::autoclean;
 
+use Test::More;
 use Catalyst::Runtime 5.80;
-
 
 use Catalyst qw/
     -Debug
     +CatalystX::Fastly::Role::Response
 
-/;
+    /;
 
 extends 'Catalyst';
 
 __PACKAGE__->config(
     name => 'Test::App',
+
     # Disable deprecated behavior needed by old applications
     disable_component_resolution_regex_fallback => 1,
 );
@@ -23,12 +24,13 @@ __PACKAGE__->config(
 __PACKAGE__->setup();
 
 sub cdn_purge_now {
+    my ( $c, $args ) = @_;
+
+    is( $args->{keys}->[0], 'BAR', '1st purge_now key is BAR' );
 
 }
 
-
 1;
-
 
 # sub cdn_purge_now {
 
@@ -39,7 +41,5 @@ sub cdn_purge_now {
 #     /;
 
 # extends 'Catalyst';
-
-
 
 1;

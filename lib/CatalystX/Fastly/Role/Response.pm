@@ -20,12 +20,34 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
 
 =head1 SYNOPTIS
 
-    package MyApp::Catalyst;
+    package MyApp;
+
+    ...
 
     use Catalyst qw/
+        ConfigLoader
+        +MooseX::Fastly::Role
         +CatalystX::Fastly::Role::Response
       /;
 
+    extends 'Catalyst';
+
+    ...
+
+    package MyApp::Controller::Root
+
+    sub a_page :Path('some_page') {
+        my ( $self, $c ) = @_;
+
+        $c->cdn_max_age('10d');
+        $c->browser_max_age('1d');
+
+        $c->add_surrogate_key('FOO','WIBBLE');
+
+        $c->purge_surrogate_key('BAR');
+
+        $c->response->body( 'Add cache and surrogate key headers, and purge' );
+    }
 
 =head1 DESCRIPTION
 
@@ -34,7 +56,8 @@ Distribution Network (CDN) and/or Cacheing proxy. It is specifically targeted
 at L<Fastly|https://www.fastly.com> but hopefully others could use it as a
 template for other CDN's in future.
 
-Values are converted and headers set in C<finalize_headers>
+Values are converted and headers set in C<finalize_headers>, this is
+also when any purges take place.
 
 =head1 METHODS
 
@@ -139,6 +162,10 @@ has _surrogate_keys => (
 
   $c->purge_surrogate_key('BAR');
 
+purge_surrogate_keys are passed to C<cdn_purge_now>
+
+$c->cdn_purge_now( { keys => \@keys, } );
+
 =cut
 
 has _surrogate_keys_to_purge => (
@@ -168,6 +195,8 @@ has cdn_standardize_surrogate_keys => (
     isa     => 'Bool',
     default => sub {0},
 );
+
+=head1 INTERNAL METHODS
 
 =head2 finalize_headers
 
@@ -235,7 +264,7 @@ sub finalize_headers {
     if ( $c->has_surrogate_keys ) {
 
         # See http://www.fastly.com/blog/surrogate-keys-part-1/
-        my @keys = $c->surrogate_keys_to_purge();
+        my @keys = $c->surrogate_keys();
 
         if ( $c->cdn_standardize_surrogate_keys ) {
             @keys = _cdn_standardize_surrogate_keys(@keys);
@@ -248,14 +277,26 @@ sub finalize_headers {
 }
 
 sub _cdn_standardize_surrogate_keys {
+
     my @keys = map {
         my $key = $_;
         $key =~ s/\W//g;    # Remove all non word characters
         $key = uc $key;     # go upper case
         $key
-    } $@;
+    } @_;
+
     return @keys;
 
 }
+
+=head1 SEE ALSO
+
+L<MooseX::Fastly::Role> - provides cdn_purge_now
+
+=head1 AUTHOR
+
+Leo Lapworth <LLAP@cpan.org>
+
+=cut
 
 1;

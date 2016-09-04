@@ -60,5 +60,34 @@ my $mech = Test::WWW::Mechanize::Catalyst->new( catalyst_app => 'Test::App' );
 
 }
 
+{
+    note('Surrogate keys - basic');
+
+    $mech->get('/some_surrogate_keys');
+    $mech->content_contains("surrogate keys");
+
+    $mech->header_is( 'Surrogate-Key', 'f%oo W1BBL3!',
+        'Surrogate-Keys: set to "f%oo W1BBL3"' );
+
+    $mech->lacks_header_ok( 'Surrogate-Control',  'No Surrogate-Control header' );
+    $mech->lacks_header_ok( 'Cache-Control',  'No ache-Control header' );
+
+    $mech->lacks_header_ok( 'Pragma',  'No Pragma header' );
+    $mech->lacks_header_ok( 'Expires', 'No Expires header' );
+
+}
+
+
+{
+    note('Surrogate keys - some_surrogate_keys_standardized');
+
+    $mech->get('/some_surrogate_keys_standardized');
+    $mech->content_contains("surrogate keys standardized");
+
+    $mech->header_is( 'Surrogate-Key', 'FOO W1BBL3',
+        'Surrogate-Keys: set to cleaned: "FOO W1BBL3"' );
+
+}
+
 done_testing();
 
