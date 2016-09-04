@@ -73,7 +73,7 @@ template for other CDN's in future.
 Values are converted and headers set in C<finalize_headers>, this is
 also when any purges take place.
 
-=head1 METHODS
+=head1 CDN METHODS
 
 =head2 cdn_max_age
 
@@ -137,6 +137,8 @@ has cdn_never_cache => (
     default => sub {0},
 );
 
+=head1 BROWSER METHODS
+
 =head2 browser_max_age
 
   $c->browser_max_age( '1m' );
@@ -151,28 +153,6 @@ has browser_max_age => (
     is  => 'rw',
     isa => 'Maybe[Str]',
 );
-
-=head2 browser_never_cache
-
-  $c->browser_never_cache(1);
-
-When true the headers below are set, this forces the browser to never cache
-the results. B<private> is NOT added as this would also affect the CDN
-even if C<cdn_max_age> was set.
-
-  Cache-Control: no-cache, no-store, must-revalidate, max-age=0, max-stale=0, post-check=0, pre-check=0
-  Pragma: no-cache
-  Expires: 0
-
-N.b. Some versions of IE won't let you download files, such as a PDF if it is
-not allowed to cache it, it is recommended to set a L</browser_max_age>('1m')
-in this situation.
-
-IE8 have issues with the above and using the back button, and need an additional I<Vary: *> header,
-L<as noted by Fastly|https://docs.fastly.com/guides/debugging/temporarily-disabling-caching>,
-this is left for you to impliment.
-
-=cut
 
 =head2 browser_stale_while_revalidate
 
@@ -204,11 +184,36 @@ has browser_stale_if_error => (
     isa => 'Maybe[Str]',
 );
 
+
+=head2 browser_never_cache
+
+  $c->browser_never_cache(1);
+
+When true the headers below are set, this forces the browser to never cache
+the results. B<private> is NOT added as this would also affect the CDN
+even if C<cdn_max_age> was set.
+
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0, max-stale=0, post-check=0, pre-check=0
+  Pragma: no-cache
+  Expires: 0
+
+N.b. Some versions of IE won't let you download files, such as a PDF if it is
+not allowed to cache it, it is recommended to set a L</browser_max_age>('1m')
+in this situation.
+
+IE8 have issues with the above and using the back button, and need an additional I<Vary: *> header,
+L<as noted by Fastly|https://docs.fastly.com/guides/debugging/temporarily-disabling-caching>,
+this is left for you to impliment.
+
+=cut
+
 has browser_never_cache => (
     is      => 'rw',
     isa     => 'Bool',
     default => sub {0},
 );
+
+=head1 SURROGATE KEY AND PURGE METHODS
 
 =head2 add_surrogate_key
 
