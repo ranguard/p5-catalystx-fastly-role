@@ -14,6 +14,20 @@ use constant CACHE_DURATION_CONVERSION => {
     y => 31_556_952,
 };
 
+my $convert_string_to_seconds = sub {
+    my $input   = $_[0];
+    my $measure = chop($input);
+
+    my $unit = CACHE_DURATION_CONVERSION->{$measure} ||    #
+        carp
+        "Unknown duration unit: $measure, valid options are Xs, Xm, Xh, Xd, XM or Xy";
+
+    carp "Initial duration start (currently: $input) must be an integer"
+        unless $input =~ /^\d+$/;
+
+    return $unit * $input;
+};
+
 =head1 NAME
 
 CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
@@ -77,6 +91,36 @@ has cdn_max_age => (
     isa => 'Maybe[Str]',
 );
 
+=head2 cdn_stale_while_revalidate
+
+  $c->cdn_stale_while_revalidate('1y');
+
+Applied to B<Surrogate-Control> only when L</cdn_max_age> is set, this
+informs the CDN how long to continue serving stale content from cache while
+it is revalidating in the background.
+
+=cut
+
+has cdn_stale_while_revalidate => (
+    is  => 'rw',
+    isa => 'Maybe[Str]',
+);
+
+=head2 cdn_stale_if_error
+
+  $c->cdn_stale_if_error('1y');
+
+Applied to B<Surrogate-Control> only when L</cdn_max_age> is set, this
+informs the CDN how long to continue serving stale content from cache
+if there is an error at the origin.
+
+=cut
+
+has cdn_stale_if_error => (
+    is  => 'rw',
+    isa => 'Maybe[Str]',
+);
+
 =head2 cdn_never_cache
 
   $c->cdn_never_cache(1);
@@ -129,6 +173,36 @@ L<as noted by Fastly|https://docs.fastly.com/guides/debugging/temporarily-disabl
 this is left for you to impliment.
 
 =cut
+
+=head2 browser_stale_while_revalidate
+
+  $c->browser_stale_while_revalidate('1y');
+
+Applied to B<Cache-Control> only when L</browser_max_age> is set, this
+informs the browser how long to continue serving stale content from cache while
+it is revalidating fromm the CDN.
+
+=cut
+
+has browser_stale_while_revalidate => (
+    is  => 'rw',
+    isa => 'Maybe[Str]',
+);
+
+=head2 browser_stale_if_error
+
+  $c->browser_stale_if_error('1y');
+
+Applied to B<Cache-Control> only when L</browser_max_age> is set, this
+informs the browser how long to continue serving stale content from cache
+if there is an error at the CDN.
+
+=cut
+
+has browser_stale_if_error => (
+    is  => 'rw',
+    isa => 'Maybe[Str]',
+);
 
 has browser_never_cache => (
     is      => 'rw',
@@ -220,10 +294,24 @@ sub finalize_headers {
 
     } elsif ( my $browser_max_age = $c->browser_max_age ) {
 
-        my $unit = CACHE_DURATION_CONVERSION->{ chop($browser_max_age) } || 1;
-        my $max_age = sprintf 'max-age=%s', $unit * $browser_max_age;
+        my @cache_control;
 
-        $c->res->header( 'Cache-Control' => $max_age );
+        push @cache_control, sprintf 'max-age=%s',
+            $convert_string_to_seconds->($browser_max_age);
+
+        if ( my $duration = $c->browser_stale_while_revalidate ) {
+            push @cache_control, sprintf 'stale-while-revalidate=%s',
+                $convert_string_to_seconds->($duration);
+
+        }
+
+        if ( my $duration = $c->browser_stale_if_error ) {
+            push @cache_control, sprintf 'stale-if-error=%s',
+                $convert_string_to_seconds->($duration);
+
+        }
+
+        $c->res->header( 'Cache-Control' => join( ', ', @cache_control ) );
 
     }
 
@@ -236,12 +324,25 @@ sub finalize_headers {
 
     } elsif ( my $cdn_max_age = $c->cdn_max_age ) {
 
-        # TODO: https://www.fastly.com/blog/stale-while-revalidate/
-        # Use this value
-        my $unit = CACHE_DURATION_CONVERSION->{ chop($cdn_max_age) } || 1;
-        my $max_age = sprintf 'max-age=%s', $unit * $cdn_max_age;
+        my @surrogate_control;
 
-        $c->res->header( 'Surrogate-Control' => $max_age );
+        push @surrogate_control, sprintf 'max-age=%s',
+            $convert_string_to_seconds->($cdn_max_age);
+
+        if ( my $duration = $c->cdn_stale_while_revalidate ) {
+            push @surrogate_control, sprintf 'stale-while-revalidate=%s',
+                $convert_string_to_seconds->($duration);
+
+        }
+
+        if ( my $duration = $c->cdn_stale_if_error ) {
+            push @surrogate_control, sprintf 'stale-if-error=%s',
+                $convert_string_to_seconds->($duration);
+
+        }
+
+        $c->res->header(
+            'Surrogate-Control' => join( ', ', @surrogate_control ) );
 
     }
 
@@ -276,6 +377,7 @@ sub finalize_headers {
 
 }
 
+# Method so could be overwritten if needed
 sub _cdn_standardize_surrogate_keys {
 
     my @keys = map {
@@ -292,6 +394,7 @@ sub _cdn_standardize_surrogate_keys {
 =head1 SEE ALSO
 
 L<MooseX::Fastly::Role> - provides cdn_purge_now
+L<stale-while-validate|https://www.fastly.com/blog/stale-while-revalidate/>
 
 =head1 AUTHOR
 

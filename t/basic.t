@@ -51,10 +51,10 @@ my $mech = Test::WWW::Mechanize::Catalyst->new( catalyst_app => 'Test::App' );
     $mech->get('/some_caching');
     $mech->content_contains("Browser and CDN cacheing different max ages");
 
-    $mech->header_is( 'Surrogate-Control', 'max-age=864000',
-        'Surrogate-Control: set to max-age=864000' );
-    $mech->header_is( 'Cache-Control', 'max-age=86400',
-        'Cache-Control for browser set to max-age=86400' );
+    $mech->header_is( 'Surrogate-Control', 'max-age=600, stale-while-revalidate=86400, stale-if-error=172800',
+        'Surrogate-Control: set to max-age=600, stale-while-revalidate=86400, stale-if-error=172800' );
+    $mech->header_is( 'Cache-Control', 'max-age=10, stale-while-revalidate=172800, stale-if-error=259200',
+        'Cache-Control for browser set to max-age=10, stale-while-revalidate=172800, stale-if-error=259200' );
     $mech->lacks_header_ok( 'Pragma',  'No Pragma header' );
     $mech->lacks_header_ok( 'Expires', 'No Expires header' );
 

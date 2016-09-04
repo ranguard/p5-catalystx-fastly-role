@@ -36,8 +36,13 @@ sub page_with_no_caching : Path('page_with_no_caching') {
 sub some_caching : Path('some_caching') {
     my ( $self, $c ) = @_;
 
-    $c->cdn_max_age('10d');
-    $c->browser_max_age('1d');
+    $c->cdn_max_age('10m');
+    $c->cdn_stale_if_error('2d');
+    $c->cdn_stale_while_revalidate('1d');
+
+    $c->browser_max_age('10s');
+    $c->browser_stale_if_error('3d');
+    $c->browser_stale_while_revalidate('2d');
 
     $c->response->body('Browser and CDN cacheing different max ages');
 }
