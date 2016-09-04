@@ -214,11 +214,6 @@ sub finalize_headers {
 
         $c->res->header( 'Surrogate-Control' => $max_age );
 
-    } elsif ( !$c->res->header('Last-Modified') ) {
-
-        # If Last-Modified, Fastly can use that, otherwise default to no-cache
-        $c->res->header( 'Surrogate-Control' => 'no-cache' );
-
     }
 
     # Some action must have triggered a purge
