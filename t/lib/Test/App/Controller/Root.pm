@@ -58,7 +58,7 @@ sub some_keys : Path('some_surrogate_keys') {
 sub some_keys_standardized : Path('some_surrogate_keys_standardized') {
     my ( $self, $c ) = @_;
 
-	$c->cdn_standardize_surrogate_keys(1);
+    $c->cdn_standardize_surrogate_keys(1);
 
     $c->add_surrogate_key( 'f%oo', 'W1BBL3!' );
 
