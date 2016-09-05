@@ -1,8 +1,11 @@
 Revision history for Perl module CatalystX::Fastly::Role::Response:
 
+0.03 Mon  5 Sep 2016 21:12:54 BST
+    - be nice with finalize_headers and change to a 'before'
+
 0.02 Mon  5 Sep 2016 19:36:12 BST
     - Remove purge methods as MooseX::Fastly::Role could be used directly
     - Cleanup pod
 
 0.01 Sat  3 Sep 2016 20:48:51 BST
-	- Initial release
+    - Initial release

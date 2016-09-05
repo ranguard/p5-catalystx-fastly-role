@@ -273,7 +273,7 @@ automatically by Catalyst.
 
 =cut
 
-sub finalize_headers {
+before 'finalize_headers' => sub {
     my $c = shift;
 
     if ( $c->browser_never_cache ) {
@@ -345,7 +345,7 @@ sub finalize_headers {
         $c->res->header( 'Surrogate-Key' => $c->join_surrogate_keys(' ') );
     }
 
-}
+};
 
 
 =head1 SEE ALSO
