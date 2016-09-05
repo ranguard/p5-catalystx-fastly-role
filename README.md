@@ -26,7 +26,7 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
 
         $c->add_surrogate_key('FOO','WIBBLE');
 
-        $c->response->body( 'Add cache and surrogate key headers, and purge' );
+        $c->response->body( 'Add cache and surrogate key headers' );
     }
 
 # DESCRIPTION
