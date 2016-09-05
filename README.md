@@ -9,8 +9,6 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
     ...
 
     use Catalyst qw/
-        ConfigLoader
-        +MooseX::Fastly::Role
         +CatalystX::Fastly::Role::Response
       /;
 
@@ -28,31 +26,54 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
 
         $c->add_surrogate_key('FOO','WIBBLE');
 
-        $c->purge_surrogate_key('BAR');
-
         $c->response->body( 'Add cache and surrogate key headers, and purge' );
     }
 
 # DESCRIPTION
 
-This role adds methods to Catalyst relating to use of a Content
-Distribution Network (CDN) and/or Cacheing proxy. It is specifically targeted
-at [Fastly](https://www.fastly.com) but hopefully others could use it as a
-template for other CDN's in future.
+This role adds methods to set appropreate cache headers in Catalyst responses,
+relating to use of a Content Distribution Network (CDN) and/or Cacheing
+proxy as well as cache settings for HTTP clients (e.g. web browser). It is
+specifically targeted at [Fastly](https://www.fastly.com) but may also be
+useful to others.
 
-Values are converted and headers set in `finalize_headers`, this is
-also when any purges take place.
+Values are converted and headers set in `finalize_headers`. Headers
+affected are:
 
-# METHODS
+- -
+
+    Cache-Control: HTTP client (e.g. browser) and CDN (if Surrogate-Control not used) cache settings
+
+- -
+
+    Surrogate-Control: CDN only cache settings
+
+- -
+
+    Surrogate-Key: CDN only, can then later be used to purge content
+
+- -
+
+    Pragma: only set for for [browser\_never\_cache](https://metacpan.org/pod/browser_never_cache)
+
+- -
+
+    Expires: only for [browser\_never\_cache](https://metacpan.org/pod/browser_never_cache)
+
+# TIME PERIOD FORMAT
+
+All time periods are expressed as: `Xs`, `Xm`, `Xh`, `Xd`, `XM` or `Xy`,
+e.g. seconds, minutes, hours, days, months or years, e.g. `3h` is three hours.
+
+# CDN METHODS
 
 ## cdn\_max\_age
 
     $c->cdn_max_age( '1d' );
 
-Takes Xs, Xm, Xh, Xd, XM or Xy, which is converted into seconds and used to set
-**max-age** in the **Surrogate-Control** header, which CDN's use to determine how
-long to cache for. If not supplied Fastly will use the
-**Cache-Control** headers value (as set by ["browser\_max\_age"](#browser_max_age)).
+Used to set **max-age** in the **Surrogate-Control** header, which CDN's use
+to determine how long to cache for. **If _not_ supplied the CDN will use the
+**Cache-Control** headers value** (as set by ["browser\_max\_age"](#browser_max_age)).
 
 ## cdn\_stale\_while\_revalidate
 
@@ -75,16 +96,35 @@ if there is an error at the origin.
     $c->cdn_never_cache(1);
 
 When true the **Surrogate-Control** header will have a value of **private**,
-this forces fastly to never cache the results (even for multiple outstanding
-requests), no matter what other options have been set.
+this forces Fastly (other CDN's may behave differently) to never cache the
+results (even for multiple outstanding requests), no matter what other
+options have been set.
+
+# BROWSER METHODS
 
 ## browser\_max\_age
 
     $c->browser_max_age( '1m' );
 
-Takes Xs, Xm, Xh, Xd, XM, Xy, which is converted to seconds and used to
-set **max-age** in the **Cache-Control** header, browsers use this to
-determine how long to cache for.
+Used to set **max-age** in the **Cache-Control** header, browsers use this to
+determine how long to cache for. **The CDN will also use this if there is
+no **Surrogate-Control** (as set by ["cdn\_max\_age"](#cdn_max_age))**.
+
+## browser\_stale\_while\_revalidate
+
+    $c->browser_stale_while_revalidate('1y');
+
+Applied to **Cache-Control** only when ["browser\_max\_age"](#browser_max_age) is set, this
+informs the browser how long to continue serving stale content from cache while
+it is revalidating from the CDN.
+
+## browser\_stale\_if\_error
+
+    $c->browser_stale_if_error('1y');
+
+Applied to **Cache-Control** only when ["browser\_max\_age"](#browser_max_age) is set, this
+informs the browser how long to continue serving stale content from cache
+if there is an error at the CDN.
 
 ## browser\_never\_cache
 
@@ -106,21 +146,7 @@ IE8 have issues with the above and using the back button, and need an additional
 [as noted by Fastly](https://docs.fastly.com/guides/debugging/temporarily-disabling-caching),
 this is left for you to impliment.
 
-## browser\_stale\_while\_revalidate
-
-    $c->browser_stale_while_revalidate('1y');
-
-Applied to **Cache-Control** only when ["browser\_max\_age"](#browser_max_age) is set, this
-informs the browser how long to continue serving stale content from cache while
-it is revalidating fromm the CDN.
-
-## browser\_stale\_if\_error
-
-    $c->browser_stale_if_error('1y');
-
-Applied to **Cache-Control** only when ["browser\_max\_age"](#browser_max_age) is set, this
-informs the browser how long to continue serving stale content from cache
-if there is an error at the CDN.
+# SURROGATE KEYS
 
 ## add\_surrogate\_key
 
@@ -129,20 +155,8 @@ if there is an error at the CDN.
 This can be called multiple times, the values will be set
 as the **Surrogate-Key** header as _\`FOO WIBBLE\`_.
 
-## purge\_surrogate\_key
-
-    $c->purge_surrogate_key('BAR');
-
-purge\_surrogate\_keys are passed to `cdn_purge_now`
-
-$c->cdn\_purge\_now( { keys => \\@keys, } );
-
-## cdn\_standardize\_surrogate\_keys
-
-    $c->cdn_standardize_surrogate_keys(1);
-
-If set this will case all keys to be upper cased and have
-any non-word characters removed.
+See ["cdn\_purge\_now" in MooseX::Fastly::Role](https://metacpan.org/pod/MooseX::Fastly::Role#cdn_purge_now) if you are
+interested in purging these keys!
 
 # INTERNAL METHODS
 
@@ -153,7 +167,7 @@ automatically by Catalyst.
 
 # SEE ALSO
 
-[MooseX::Fastly::Role](https://metacpan.org/pod/MooseX::Fastly::Role) - provides cdn\_purge\_now
+[MooseX::Fastly::Role](https://metacpan.org/pod/MooseX::Fastly::Role) - provides cdn\_purge\_now and access to [Net::Fastly](https://metacpan.org/pod/Net::Fastly)
 [stale-while-validate](https://www.fastly.com/blog/stale-while-revalidate/)
 
 # AUTHOR

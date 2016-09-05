@@ -23,13 +23,6 @@ __PACKAGE__->config(
 # Start the application
 __PACKAGE__->setup();
 
-sub cdn_purge_now {
-    my ( $c, $args ) = @_;
-
-    is( $args->{keys}->[0], 'BAR', '1st purge_now key is BAR' );
-
-}
-
 1;
 
 # sub cdn_purge_now {

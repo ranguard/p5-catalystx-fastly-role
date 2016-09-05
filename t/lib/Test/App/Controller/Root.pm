@@ -50,21 +50,9 @@ sub some_caching : Path('some_caching') {
 sub some_keys : Path('some_surrogate_keys') {
     my ( $self, $c ) = @_;
 
-    $c->add_surrogate_key( 'f%oo', 'W1BBL3!' );
+    $c->add_surrogate_key( 'f%oo', 'W1-BBL3!' );
 
     $c->response->body('surrogate keys');
-}
-
-sub some_keys_standardized : Path('some_surrogate_keys_standardized') {
-    my ( $self, $c ) = @_;
-
-    $c->cdn_standardize_surrogate_keys(1);
-
-    $c->add_surrogate_key( 'f%oo', 'W1BBL3!' );
-
-    $c->purge_surrogate_key('B%aR');
-
-    $c->response->body('surrogate keys standardized');
 }
 
 sub end : ActionClass('RenderView') { }

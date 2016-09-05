@@ -3,8 +3,6 @@ package CatalystX::Fastly::Role::Response;
 use Moose::Role;
 use Carp;
 
-requires 'cdn_purge_now';
-
 use constant CACHE_DURATION_CONVERSION => {
     s => 1,
     m => 60,
@@ -39,8 +37,6 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
     ...
 
     use Catalyst qw/
-        ConfigLoader
-        +MooseX::Fastly::Role
         +CatalystX::Fastly::Role::Response
       /;
 
@@ -58,20 +54,48 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
 
         $c->add_surrogate_key('FOO','WIBBLE');
 
-        $c->purge_surrogate_key('BAR');
-
-        $c->response->body( 'Add cache and surrogate key headers, and purge' );
+        $c->response->body( 'Add cache and surrogate key headers' );
     }
 
 =head1 DESCRIPTION
 
-This role adds methods to Catalyst relating to use of a Content
-Distribution Network (CDN) and/or Cacheing proxy. It is specifically targeted
-at L<Fastly|https://www.fastly.com> but hopefully others could use it as a
-template for other CDN's in future.
+This role adds methods to set appropreate cache headers in Catalyst responses,
+relating to use of a Content Distribution Network (CDN) and/or Cacheing
+proxy as well as cache settings for HTTP clients (e.g. web browser). It is
+specifically targeted at L<Fastly|https://www.fastly.com> but may also be
+useful to others.
 
-Values are converted and headers set in C<finalize_headers>, this is
-also when any purges take place.
+Values are converted and headers set in C<finalize_headers>. Headers
+affected are:
+
+=over 4
+
+=item -
+
+Cache-Control: HTTP client (e.g. browser) and CDN (if Surrogate-Control not used) cache settings
+
+=item -
+
+Surrogate-Control: CDN only cache settings
+
+=item -
+
+Surrogate-Key: CDN only, can then later be used to purge content
+
+=item -
+
+Pragma: only set for for L<browser_never_cache>
+
+=item -
+
+Expires: only for L<browser_never_cache>
+
+=back
+
+=head1 TIME PERIOD FORMAT
+
+All time periods are expressed as: C<Xs>, C<Xm>, C<Xh>, C<Xd>, C<XM> or C<Xy>,
+e.g. seconds, minutes, hours, days, months or years, e.g. C<3h> is three hours.
 
 =head1 CDN METHODS
 
@@ -79,10 +103,9 @@ also when any purges take place.
 
   $c->cdn_max_age( '1d' );
 
-Takes Xs, Xm, Xh, Xd, XM or Xy, which is converted into seconds and used to set
-B<max-age> in the B<Surrogate-Control> header, which CDN's use to determine how
-long to cache for. If not supplied Fastly will use the
-B<Cache-Control> headers value (as set by L</browser_max_age>).
+Used to set B<max-age> in the B<Surrogate-Control> header, which CDN's use
+to determine how long to cache for. B<If I<not> supplied the CDN will use the
+B<Cache-Control> headers value> (as set by L</browser_max_age>).
 
 =cut
 
@@ -126,8 +149,9 @@ has cdn_stale_if_error => (
   $c->cdn_never_cache(1);
 
 When true the B<Surrogate-Control> header will have a value of B<private>,
-this forces fastly to never cache the results (even for multiple outstanding
-requests), no matter what other options have been set.
+this forces Fastly (other CDN's may behave differently) to never cache the
+results (even for multiple outstanding requests), no matter what other
+options have been set.
 
 =cut
 
@@ -143,9 +167,9 @@ has cdn_never_cache => (
 
   $c->browser_max_age( '1m' );
 
-Takes Xs, Xm, Xh, Xd, XM, Xy, which is converted to seconds and used to
-set B<max-age> in the B<Cache-Control> header, browsers use this to
-determine how long to cache for.
+Used to set B<max-age> in the B<Cache-Control> header, browsers use this to
+determine how long to cache for. B<The CDN will also use this if there is
+no B<Surrogate-Control> (as set by L</cdn_max_age>)>.
 
 =cut
 
@@ -160,7 +184,7 @@ has browser_max_age => (
 
 Applied to B<Cache-Control> only when L</browser_max_age> is set, this
 informs the browser how long to continue serving stale content from cache while
-it is revalidating fromm the CDN.
+it is revalidating from the CDN.
 
 =cut
 
@@ -213,7 +237,7 @@ has browser_never_cache => (
     default => sub {0},
 );
 
-=head1 SURROGATE KEY AND PURGE METHODS
+=head1 SURROGATE KEYS
 
 =head2 add_surrogate_key
 
@@ -221,6 +245,9 @@ has browser_never_cache => (
 
 This can be called multiple times, the values will be set
 as the B<Surrogate-Key> header as I<`FOO WIBBLE`>.
+
+See L<MooseX::Fastly::Role/cdn_purge_now> if you are
+interested in purging these keys!
 
 =cut
 
@@ -237,44 +264,6 @@ has _surrogate_keys => (
     },
 );
 
-=head2 purge_surrogate_key
-
-  $c->purge_surrogate_key('BAR');
-
-purge_surrogate_keys are passed to C<cdn_purge_now>
-
-$c->cdn_purge_now( { keys => \@keys, } );
-
-=cut
-
-has _surrogate_keys_to_purge => (
-    traits  => ['Array'],
-    is      => 'ro',
-    isa     => 'ArrayRef[Str]',
-    default => sub { [] },
-    handles => {
-        purge_surrogate_key          => 'push',
-        has_surrogate_keys_to_purge  => 'count',
-        surrogate_keys_to_purge      => 'elements',
-        join_surrogate_keys_to_purge => 'join',
-    },
-);
-
-=head2 cdn_standardize_surrogate_keys
-
-  $c->cdn_standardize_surrogate_keys(1);
-
-If set this will case all keys to be upper cased and have
-any non-word characters removed.
-
-=cut
-
-has cdn_standardize_surrogate_keys => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => sub {0},
-);
-
 =head1 INTERNAL METHODS
 
 =head2 finalize_headers
@@ -287,8 +276,6 @@ automatically by Catalyst.
 sub finalize_headers {
     my $c = shift;
 
-    # Headers for web browser, Fastly will also use these if
-    # no cdn headers have been set.
     if ( $c->browser_never_cache ) {
 
         $c->res->header( 'Cache-Control' =>
@@ -351,54 +338,19 @@ sub finalize_headers {
 
     }
 
-    # Some action must have triggered a purge
-    if ( $c->has_surrogate_keys_to_purge ) {
-
-        # Something changed, means we need to purge some keys
-        # All keys are set as UC, with : and -'s removed
-        # so make sure our purging is as well
-        my @keys = $c->surrogate_keys_to_purge();
-
-        if ( $c->cdn_standardize_surrogate_keys ) {
-            @keys = _cdn_standardize_surrogate_keys(@keys);
-        }
-
-        $c->cdn_purge_now( { keys => \@keys, } );
-    }
-
     # Surrogate key
     if ( $c->has_surrogate_keys ) {
 
         # See http://www.fastly.com/blog/surrogate-keys-part-1/
-        my @keys = $c->surrogate_keys();
-
-        if ( $c->cdn_standardize_surrogate_keys ) {
-            @keys = _cdn_standardize_surrogate_keys(@keys);
-        }
-
-        my $key_string = join ' ', @keys;
-        $c->res->header( 'Surrogate-Key' => $key_string );
+        $c->res->header( 'Surrogate-Key' => $c->join_surrogate_keys(' ') );
     }
 
 }
 
-# Method so could be overwritten if needed
-sub _cdn_standardize_surrogate_keys {
-
-    my @keys = map {
-        my $key = $_;
-        $key =~ s/\W//g;    # Remove all non word characters
-        $key = uc $key;     # go upper case
-        $key
-    } @_;
-
-    return @keys;
-
-}
 
 =head1 SEE ALSO
 
-L<MooseX::Fastly::Role> - provides cdn_purge_now
+L<MooseX::Fastly::Role> - provides cdn_purge_now and access to L<Net::Fastly>
 L<stale-while-validate|https://www.fastly.com/blog/stale-while-revalidate/>
 
 =head1 AUTHOR
