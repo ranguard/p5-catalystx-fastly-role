@@ -2,6 +2,7 @@ package Test::App::Controller::Root;
 
 use Moose;
 use namespace::autoclean;
+use Catalyst::Action::RenderView; # do autopreq picks it up
 
 BEGIN { extends 'Catalyst::Controller' }
 

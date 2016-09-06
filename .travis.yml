@@ -1,0 +1,20 @@
+language: perl
+perl:
+  - "5.22"
+
+install:
+   - cpanm --quiet --notest --skip-satisfied Dist::Zilla
+   - cpanm Test::NoTabs
+   - "dzil authordeps | grep -vP '[^\\w:]' | cpanm --verbose --notest --skip-satisfied"
+   - "dzil listdeps   | grep -vP '[^\\w:]' | cpanm --verbose --skip-satisfied"
+
+script:
+  - dzil smoke --release --author
+
+notifications:
+  email:
+    recipients:
+      - llap@cpan.org
+    on_success: always
+    on_failure: always
+
