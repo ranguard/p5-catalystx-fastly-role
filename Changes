@@ -1,5 +1,5 @@
 Revision history for Perl module CatalystX::Fastly::Role::Response:
-
+ 
 0.04 Tue  6 Sep 2016 18:19:26 BST
     - Add `use` for autopreq to make tests pass
 
