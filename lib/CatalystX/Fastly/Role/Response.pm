@@ -208,7 +208,6 @@ has browser_stale_if_error => (
     isa => 'Maybe[Str]',
 );
 
-
 =head2 browser_never_cache
 
   $c->browser_never_cache(1);
@@ -312,7 +311,11 @@ before 'finalize_headers' => sub {
     if ( $c->cdn_never_cache ) {
 
         # Make sure fastly doesn't cache this by accident
-        $c->res->header( 'Surrogate-Control' => 'private' );
+        # tell them it's private, must be on the Cache-Control header
+        my $cc = $c->res->header('Cache-Control');
+        if ( $cc && $cc !~ /private/ ) {
+            $c->res->headers->push_header( 'Cache-Control' => 'private' );
+        }
 
     } elsif ( my $cdn_max_age = $c->cdn_max_age ) {
 
@@ -346,7 +349,6 @@ before 'finalize_headers' => sub {
     }
 
 };
-
 
 =head1 SEE ALSO
 

@@ -2,7 +2,7 @@ package Test::App::Controller::Root;
 
 use Moose;
 use namespace::autoclean;
-use Catalyst::Action::RenderView; # do autopreq picks it up
+use Catalyst::Action::RenderView;    # do autopreq picks it up
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -46,6 +46,16 @@ sub some_caching : Path('some_caching') {
     $c->browser_stale_while_revalidate('2d');
 
     $c->response->body('Browser and CDN cacheing different max ages');
+}
+
+sub no_cdn_some_browser : Path('cdn_no_cache_browser_cache') {
+    my ( $self, $c ) = @_;
+
+    $c->cdn_never_cache(1);
+
+    $c->browser_max_age('10s');
+
+    $c->response->body('Browser cacheing, CDN no cache');
 }
 
 sub some_keys : Path('some_surrogate_keys') {

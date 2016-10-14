@@ -1,5 +1,8 @@
 Revision history for Perl module CatalystX::Fastly::Role::Response:
- 
+
+0.05 Fri 14 Oct 2016 16:22:24
+	- Correct cdn_no_cache() - set 'private' on Cache-Control
+
 0.04 Tue  6 Sep 2016 18:19:26 BST
     - Add `use` for autopreq to make tests pass
 
