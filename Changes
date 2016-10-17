@@ -1,5 +1,8 @@
 Revision history for Perl module CatalystX::Fastly::Role::Response:
 
+0.06 Mon 17 Oct 2016 19:14:48
+	- Even set private when there is no current Cache-Control set
+
 0.05 Fri 14 Oct 2016 16:22:24
 	- Correct cdn_no_cache() - set 'private' on Cache-Control
 
