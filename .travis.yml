@@ -2,6 +2,12 @@ language: perl
 perl:
   - "5.22"
 
+before_install:
+  - mkdir ~/.dzil/
+  - echo '[%Rights]' >> ~/.dzil/config.ini
+  - echo 'license_class    = Perl_5' >> ~/.dzil/config.ini
+  - echo 'copyright_holder = Leo Lapworth' >> ~/.dzil/config.ini
+
 install:
    - cpanm --quiet --notest --skip-satisfied Dist::Zilla
    - cpanm Test::NoTabs
