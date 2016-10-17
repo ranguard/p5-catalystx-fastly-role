@@ -85,6 +85,21 @@ my $mech = Test::WWW::Mechanize::Catalyst->new( catalyst_app => 'Test::App' );
 }
 
 {
+    note('Browser caching NOT set, and not CDN');
+
+    $mech->get('/cdn_no_browser_cache_not_set');
+    $mech->content_contains("Browser cacheing not set, CDN no cache");
+
+    $mech->header_is( 'Cache-Control', 'private',
+        'Cache-Control, with private for CDN' );
+    $mech->lacks_header_ok( 'Surrogate-Control',
+        'No Surrogate-Control header' );
+    $mech->lacks_header_ok( 'Pragma',  'No Pragma header' );
+    $mech->lacks_header_ok( 'Expires', 'No Expires header' );
+
+}
+
+{
     note('Surrogate keys - basic');
 
     $mech->get('/some_surrogate_keys');

@@ -58,6 +58,14 @@ sub no_cdn_some_browser : Path('cdn_no_cache_browser_cache') {
     $c->response->body('Browser cacheing, CDN no cache');
 }
 
+sub no_cdn_browser_not_set : Path('cdn_no_browser_cache_not_set') {
+    my ( $self, $c ) = @_;
+
+    $c->cdn_never_cache(1);
+
+    $c->response->body('Browser cacheing not set, CDN no cache');
+}
+
 sub some_keys : Path('some_surrogate_keys') {
     my ( $self, $c ) = @_;
 
