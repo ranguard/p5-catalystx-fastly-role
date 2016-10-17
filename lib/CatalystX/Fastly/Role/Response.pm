@@ -312,8 +312,8 @@ before 'finalize_headers' => sub {
 
         # Make sure fastly doesn't cache this by accident
         # tell them it's private, must be on the Cache-Control header
-        my $cc = $c->res->header('Cache-Control');
-        if ( $cc && $cc !~ /private/ ) {
+        my $cc = $c->res->header('Cache-Control') || '';
+        if ( $cc !~ /private/ ) {
             $c->res->headers->push_header( 'Cache-Control' => 'private' );
         }
 
