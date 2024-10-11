@@ -70,25 +70,25 @@ affected are:
 
 =over 4
 
-=item -
+=item Cache-Control
 
-Cache-Control: HTTP client (e.g. browser) and CDN (if Surrogate-Control not used) cache settings
+HTTP client (e.g. browser) and CDN (if Surrogate-Control not used) cache settings
 
-=item -
+=item Surrogate-Control
 
-Surrogate-Control: CDN only cache settings
+CDN only cache settings
 
-=item -
+=item Surrogate-Key
 
-Surrogate-Key: CDN only, can then later be used to purge content
+CDN only, can then later be used to purge content
 
-=item -
+=item Pragma
 
-Pragma: only set for for L<browser_never_cache>
+only set for for L<browser_never_cache>
 
-=item -
+=item Expires
 
-Expires: only for L<browser_never_cache>
+only for L<browser_never_cache>
 
 =back
 
