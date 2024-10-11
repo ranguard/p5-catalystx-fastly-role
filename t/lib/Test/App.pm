@@ -6,7 +6,6 @@ use Test::More;
 use Catalyst::Runtime 5.80;
 
 use Catalyst qw/
-    -Debug
     +CatalystX::Fastly::Role::Response
 
     /;
