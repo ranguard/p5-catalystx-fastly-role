@@ -11,15 +11,10 @@ jobs:
       versions: ${{ steps.perl-versions.outputs.perl-versions }}
     steps:
       - uses: actions/checkout@v4
-      - name: Extract perl dependecy
-        id: prereqs
-        uses: perl-actions/get-prereqs@v1
-        with:
-          sources: prereqs.yml
       - id: perl-versions
         uses: perl-actions/perl-versions@v1
         with:
-          since-perl: ${{ steps.prereqs.outputs.perl }}
+          since-perl: v5.14
           with-devel: true
 
   build:
