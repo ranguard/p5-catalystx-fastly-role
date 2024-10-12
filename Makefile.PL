@@ -20,7 +20,6 @@ my %WriteMakefileArgs = (
     "Moose::Role" => "2.2200"
   },
   "TEST_REQUIRES" => {
-    "Catalyst::Action::RenderView" => "0.16",
     "Catalyst::Controller" => 0,
     "Catalyst::Runtime" => "5.90001",
     "Catalyst::Test" => 0,
@@ -39,7 +38,6 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
-  "Catalyst::Action::RenderView" => "0.16",
   "Catalyst::Controller" => 0,
   "Catalyst::Runtime" => "5.90001",
   "Catalyst::Test" => 0,

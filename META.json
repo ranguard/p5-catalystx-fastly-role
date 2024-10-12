@@ -48,7 +48,6 @@
             "CPAN::Meta" : "2.120900"
          },
          "requires" : {
-            "Catalyst::Action::RenderView" : "0.16",
             "Catalyst::Controller" : "0",
             "Catalyst::Runtime" : "5.90001",
             "Catalyst::Test" : "0",
