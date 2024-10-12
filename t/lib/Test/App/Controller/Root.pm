@@ -2,7 +2,6 @@ package Test::App::Controller::Root;
 
 use Moose;
 use namespace::autoclean;
-use Catalyst::Action::RenderView;    # do autopreq picks it up
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -73,8 +72,6 @@ sub some_keys : Path('some_surrogate_keys') {
 
     $c->response->body('surrogate keys');
 }
-
-sub end : ActionClass('RenderView') { }
 
 __PACKAGE__->meta->make_immutable;
 
