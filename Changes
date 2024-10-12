@@ -1,5 +1,7 @@
 Revision history for Perl module CatalystX::Fastly::Role::Response:
 
+{{ $NEXT }}
+
 0.07    2024-10-12
   - Drop Test::WWW::Mechanize::Catalyst test prereq
   - Fix Pod lists

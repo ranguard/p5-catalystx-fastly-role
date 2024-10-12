@@ -2,7 +2,7 @@ package CatalystX::Fastly::Role::Response;
 use Moose::Role;
 use Carp;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 use constant _CACHE_DURATION_CONVERSION => {
     s => 1,
