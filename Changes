@@ -1,6 +1,11 @@
 Revision history for Perl module CatalystX::Fastly::Role::Response:
 
 {{ $NEXT }}
+  - Drop Test::WWW::Mechanize::Catalyst test prereq
+  - Fix Pod lists
+  - Clean up pod formatting
+  - Drop unneeded Catalyst::Action::RenderView test prereq
+  - revised Dist::Zilla configuration
 
 0.06    2016-10-17
   - Even set private when there is no current Cache-Control set
