@@ -1,9 +1,10 @@
 package CatalystX::Fastly::Role::Response;
-
 use Moose::Role;
 use Carp;
 
-use constant CACHE_DURATION_CONVERSION => {
+our $VERSION = '0.07';
+
+use constant _CACHE_DURATION_CONVERSION => {
     s => 1,
     m => 60,
     h => 3600,
@@ -16,7 +17,7 @@ my $convert_string_to_seconds = sub {
     my $input   = $_[0];
     my $measure = chop($input);
 
-    my $unit = CACHE_DURATION_CONVERSION->{$measure} ||    #
+    my $unit = _CACHE_DURATION_CONVERSION->{$measure} ||    #
         carp
         "Unknown duration unit: $measure, valid options are Xs, Xm, Xh, Xd, XM or Xy";
 
@@ -26,11 +27,13 @@ my $convert_string_to_seconds = sub {
     return $unit * $input;
 };
 
+=for stopwords 1m CDN IE8 revalidating
+
 =head1 NAME
 
-CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
+CatalystX::Fastly::Role::Response - Methods for Fastly integration to Catalyst
 
-=head1 SYNOPTIS
+=head1 SYNOPSIS
 
     package MyApp;
 
@@ -59,8 +62,8 @@ CatalystX::Fastly::Role::Response - Methods for Fastly intergration to Catalyst
 
 =head1 DESCRIPTION
 
-This role adds methods to set appropreate cache headers in Catalyst responses,
-relating to use of a Content Distribution Network (CDN) and/or Cacheing
+This role adds methods to set appropriate cache headers in Catalyst responses,
+relating to use of a Content Distribution Network (CDN) and/or Caching
 proxy as well as cache settings for HTTP clients (e.g. web browser). It is
 specifically targeted at L<Fastly|https://www.fastly.com> but may also be
 useful to others.
@@ -101,11 +104,11 @@ e.g. seconds, minutes, hours, days, months or years, e.g. C<3h> is three hours.
 
 =head2 cdn_max_age
 
-  $c->cdn_max_age( '1d' );
+    $c->cdn_max_age( '1d' );
 
-Used to set B<max-age> in the B<Surrogate-Control> header, which CDN's use
-to determine how long to cache for. B<If I<not> supplied the CDN will use the
-B<Cache-Control> headers value> (as set by L</browser_max_age>).
+Used to set C<max-age> in the C<Surrogate-Control> header, which CDN's use
+to determine how long to cache for. B<< If I<not> supplied the CDN will use the
+C<Cache-Control> headers value >> (as set by L</browser_max_age>).
 
 =cut
 
@@ -116,9 +119,9 @@ has cdn_max_age => (
 
 =head2 cdn_stale_while_revalidate
 
-  $c->cdn_stale_while_revalidate('1y');
+    $c->cdn_stale_while_revalidate('1y');
 
-Applied to B<Surrogate-Control> only when L</cdn_max_age> is set, this
+Applied to C<Surrogate-Control> only when L</cdn_max_age> is set, this
 informs the CDN how long to continue serving stale content from cache while
 it is revalidating in the background.
 
@@ -131,9 +134,9 @@ has cdn_stale_while_revalidate => (
 
 =head2 cdn_stale_if_error
 
-  $c->cdn_stale_if_error('1y');
+    $c->cdn_stale_if_error('1y');
 
-Applied to B<Surrogate-Control> only when L</cdn_max_age> is set, this
+Applied to C<Surrogate-Control> only when L</cdn_max_age> is set, this
 informs the CDN how long to continue serving stale content from cache
 if there is an error at the origin.
 
@@ -146,9 +149,9 @@ has cdn_stale_if_error => (
 
 =head2 cdn_never_cache
 
-  $c->cdn_never_cache(1);
+    $c->cdn_never_cache(1);
 
-When true the B<Surrogate-Control> header will have a value of B<private>,
+When true the C<Surrogate-Control> header will have a value of C<private>,
 this forces Fastly (other CDN's may behave differently) to never cache the
 results (even for multiple outstanding requests), no matter what other
 options have been set.
@@ -165,11 +168,11 @@ has cdn_never_cache => (
 
 =head2 browser_max_age
 
-  $c->browser_max_age( '1m' );
+    $c->browser_max_age( '1m' );
 
-Used to set B<max-age> in the B<Cache-Control> header, browsers use this to
-determine how long to cache for. B<The CDN will also use this if there is
-no B<Surrogate-Control> (as set by L</cdn_max_age>)>.
+Used to set C<max-age> in the C<Cache-Control> header, browsers use this to
+determine how long to cache for. B<< The CDN will also use this if there is
+no C<Surrogate-Control> (as set by L</cdn_max_age>)>. >>
 
 =cut
 
@@ -180,9 +183,9 @@ has browser_max_age => (
 
 =head2 browser_stale_while_revalidate
 
-  $c->browser_stale_while_revalidate('1y');
+    $c->browser_stale_while_revalidate('1y');
 
-Applied to B<Cache-Control> only when L</browser_max_age> is set, this
+Applied to C<Cache-Control> only when L</browser_max_age> is set, this
 informs the browser how long to continue serving stale content from cache while
 it is revalidating from the CDN.
 
@@ -195,9 +198,9 @@ has browser_stale_while_revalidate => (
 
 =head2 browser_stale_if_error
 
-  $c->browser_stale_if_error('1y');
+    $c->browser_stale_if_error('1y');
 
-Applied to B<Cache-Control> only when L</browser_max_age> is set, this
+Applied to C<Cache-Control> only when L</browser_max_age> is set, this
 informs the browser how long to continue serving stale content from cache
 if there is an error at the CDN.
 
@@ -210,15 +213,15 @@ has browser_stale_if_error => (
 
 =head2 browser_never_cache
 
-  $c->browser_never_cache(1);
+    $c->browser_never_cache(1);
 
 When true the headers below are set, this forces the browser to never cache
-the results. B<private> is NOT added as this would also affect the CDN
+the results. C<private> is NOT added as this would also affect the CDN
 even if C<cdn_max_age> was set.
 
-  Cache-Control: no-cache, no-store, must-revalidate, max-age=0, max-stale=0, post-check=0, pre-check=0
-  Pragma: no-cache
-  Expires: 0
+    Cache-Control: no-cache, no-store, must-revalidate, max-age=0, max-stale=0, post-check=0, pre-check=0
+    Pragma: no-cache
+    Expires: 0
 
 N.b. Some versions of IE won't let you download files, such as a PDF if it is
 not allowed to cache it, it is recommended to set a L</browser_max_age>('1m')
@@ -226,7 +229,7 @@ in this situation.
 
 IE8 have issues with the above and using the back button, and need an additional I<Vary: *> header,
 L<as noted by Fastly|https://docs.fastly.com/guides/debugging/temporarily-disabling-caching>,
-this is left for you to impliment.
+this is left for you to implement.
 
 =cut
 
@@ -240,10 +243,10 @@ has browser_never_cache => (
 
 =head2 add_surrogate_key
 
-  $c->add_surrogate_key('FOO','WIBBLE');
+    $c->add_surrogate_key('FOO','WIBBLE');
 
 This can be called multiple times, the values will be set
-as the B<Surrogate-Key> header as I<`FOO WIBBLE`>.
+as the C<Surrogate-Key> header as I<`FOO WIBBLE`>.
 
 See L<MooseX::Fastly::Role/cdn_purge_now> if you are
 interested in purging these keys!
@@ -354,10 +357,6 @@ before 'finalize_headers' => sub {
 
 L<MooseX::Fastly::Role> - provides cdn_purge_now and access to L<Net::Fastly>
 L<stale-while-validate|https://www.fastly.com/blog/stale-while-revalidate/>
-
-=head1 AUTHOR
-
-Leo Lapworth <LLAP@cpan.org>
 
 =cut
 
